@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Titanic Survival Prediction</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚢 Titanic Survival Predictor</h1>
+
+    <form action="/predict" method="post">
+
+        <label>Gender</label>
+
+        <select name="sex">
+            <option>male</option>
+            <option>female</option>
+        </select>
+
+        <label>Age</label>
+
+        <input
+            type="number"
+            name="age"
+            required
+        >
+
+        <label>Passenger Class</label>
+
+        <select name="pclass">
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+        </select>
+
+        <label>Travel Status</label>
+
+        <select name="isalone">
+            <option>alone</option>
+            <option>not alone</option>
+        </select>
+
+        <button type="submit">
+            Predict Survival
+        </button>
+
+    </form>
+
+    <div class="info-box">
+    <h3>Model Information</h3>
+
+    <p>Algorithm: XGBoost</p>
+    <p>Accuracy: 82.68%</p>
+    <p>ROC-AUC Score: 0.8672</p>
+</div>
+
+    {% if prediction %}
+
+    <div class="result">
+
+        <h2>
+            Prediction:
+            {{ prediction }}
+        </h2>
+
+        <h3>
+            Probability:
+            {{ probability }}
+        </h3>
+
+        <h3>
+            Confidence:
+            {{ confidence }}
+        </h3>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>
