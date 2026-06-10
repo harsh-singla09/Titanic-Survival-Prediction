@@ -1,13 +1,13 @@
 from flask import Flask, render_template, request
 import joblib
 import pandas as pd
+import os
 
 app = Flask(__name__)
 
 # Load trained model
-model = joblib.load(
-    r"C:\Users\Munish kumar\Desktop\Titanic-project\models\my_model.joblib"
-)
+model_path = os.path.join("models", "my_model.joblib")
+model = joblib.load(model_path)
 
 
 @app.route("/")
@@ -15,70 +15,57 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/predict", methods=["GET", "POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
+    try:
+        # Get form values
+        sex = request.form["sex"]
+        age = float(request.form["age"])
+        pclass = int(request.form["pclass"])
+        isalone = request.form["isalone"]
 
-    if request.method == "POST":
+        # Encode values
+        sex = 1 if sex.lower() == "female" else 0
+        isalone = 1 if isalone.lower() == "alone" else 0
 
-        try:
-            sex = request.form["sex"]
-            age = float(request.form["age"])
-            pclass = int(request.form["pclass"])
-            isalone = request.form["isalone"]
+        # Create dataframe
+        data = pd.DataFrame({
+            "Sex": [sex],
+            "Age": [age],
+            "Pclass": [pclass],
+            "IsAlone": [isalone]
+        })
 
-            # Encode values
-            sex = 1 if sex.lower() == "female" else 0
+        # Predict probability
+        probability = model.predict_proba(data)[0][1]
 
-            isalone = (
-                1 if isalone.lower() == "alone"
-                else 0
-            )
+        # Prediction result
+        prediction = (
+            "SURVIVED"
+            if probability >= 0.5
+            else "PERISHED"
+        )
 
-            # Create dataframe
-            data = pd.DataFrame({
-                "Sex": [sex],
-                "Age": [age],
-                "Pclass": [pclass],
-                "IsAlone": [isalone]
-            })
+        # Confidence level
+        if probability >= 0.80:
+            confidence = "High"
+        elif probability >= 0.60:
+            confidence = "Medium"
+        else:
+            confidence = "Low"
 
-            # Prediction probability
-            probability = model.predict_proba(data)[0][1]
+        return render_template(
+            "index.html",
+            prediction=prediction,
+            probability=f"{probability:.2%}",
+            confidence=confidence
+        )
 
-            # Prediction
-            prediction = (
-                "SURVIVED"
-                if probability >= 0.5
-                else "PERISHED"
-            )
-
-            return render_template(
-                "index.html",
-                prediction=prediction,
-                probability=f"{probability:.2%}"
-            )
-
-        except Exception as e:
-            return render_template(
-                "index.html",
-                error=str(e)
-            )
-        
-    if probability >= 0.80:
-        confidence = "High"
-
-    elif probability >= 0.60:
-        confidence = "Medium"
-
-    else:
-        confidence = "Low"
-
-    return render_template(
-    "index.html",
-    prediction=prediction,
-    probability=f"{probability:.2%}",
-    confidence=confidence
-)
+    except Exception as e:
+        return render_template(
+            "index.html",
+            error=str(e)
+        )
 
 
 if __name__ == "__main__":
